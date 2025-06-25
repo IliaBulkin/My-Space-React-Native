@@ -1,0 +1,1 @@
+export { FriendAllPage } from "./friend-all-page"

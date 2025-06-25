@@ -1,0 +1,63 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+	inputRow: {
+		position: "relative",
+		borderWidth: 1,
+		borderColor: "#CDCED2",
+		borderRadius: 10,
+		paddingRight: 60,
+		paddingLeft: 12,
+	},
+	input: {
+		fontFamily: "GTWalsheimPro-Regular",
+		fontSize: 14,
+		height: 42,
+		paddingRight: 10,
+	},
+	addButton: {
+		position: "absolute",
+		right: 10,
+		top: 5,
+		width: 30,
+		height: 30,
+		borderRadius: 30,
+		borderWidth: 2,
+		borderColor: "#543C52",
+		backgroundColor: "#543C52",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	linksView: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 8,
+		marginTop: 10,
+	},
+	linkTag: {
+		borderWidth: 2,
+		borderColor: "#CDCED2",
+		borderRadius: 25,
+		paddingHorizontal: 5,
+		paddingVertical: 10,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		textAlign: "center",
+		maxWidth: 200,
+		paddingLeft: 15,
+	},
+	linkText: {
+		fontFamily: "GTWalsheimPro-Regular",
+		color: "#070A1C",
+		fontSize: 14,
+	},
+	closeIconView: {
+		backgroundColor: "#F43F5E",
+		borderRadius: 30,
+		height: 18,
+		width: 18,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+});

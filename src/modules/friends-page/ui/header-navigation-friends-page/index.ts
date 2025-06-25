@@ -1,0 +1,1 @@
+export { HeaderNavigationFriendPages } from "./header-navigation-friends-page"

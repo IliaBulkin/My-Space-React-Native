@@ -1,0 +1,1 @@
+export { UserProfilePage } from "./user-pofile-page"

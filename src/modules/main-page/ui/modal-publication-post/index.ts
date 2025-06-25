@@ -1,0 +1,1 @@
+export {ModalPublicationPost} from "./modal-publication-post"

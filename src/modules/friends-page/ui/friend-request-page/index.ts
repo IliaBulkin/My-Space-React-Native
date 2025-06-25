@@ -1,0 +1,1 @@
+export { FriendRequestPage } from "./friend-request-page"

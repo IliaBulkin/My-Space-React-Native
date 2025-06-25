@@ -1,0 +1,1 @@
+export { FrinedProfilePage } from "./randon-user-profile-page"

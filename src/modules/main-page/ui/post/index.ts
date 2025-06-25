@@ -1,0 +1,1 @@
+export {PublicatedPost} from "./Post"

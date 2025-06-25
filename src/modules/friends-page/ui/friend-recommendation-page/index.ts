@@ -1,0 +1,1 @@
+export { FriendRecommendationPage } from "./friend-recommendation-page"

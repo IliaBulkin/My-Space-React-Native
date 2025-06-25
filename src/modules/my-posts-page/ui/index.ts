@@ -1,0 +1,1 @@
+export {MyPostsPage} from "./my-posts-page"

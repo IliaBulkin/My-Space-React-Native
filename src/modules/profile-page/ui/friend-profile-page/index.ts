@@ -1,0 +1,1 @@
+export { FrinedProfilePage } from "./friend-profile-page"
