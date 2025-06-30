@@ -39,6 +39,7 @@ import { SearchIcon } from "./search-icon";
 import { ReturnIcon } from "./return-icon";
 import { PaperPlaneIcon } from "./paper-plane-icon"
 import { PlusWithoutBorder } from "./plus-without-border";
+import { ChatDefaultLogoIcon } from "./chat-default-logo-icon";
 
 
 export const ICONS = {
@@ -82,5 +83,6 @@ export const ICONS = {
 	NotWatchedIcon,
 	SearchIcon,
 	ReturnIcon,
-	PlusWithoutBorder
+	PlusWithoutBorder,
+	ChatDefaultLogoIcon
 };

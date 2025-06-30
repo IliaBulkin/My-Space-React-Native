@@ -4,8 +4,8 @@ import Svg, { Path, SvgProps } from "react-native-svg"
 export function FriendsIcon(props: SvgProps) {
   return (
     <Svg
-      // width={21}
-      // height={20}
+      width={21}
+      height={20}
       viewBox="0 0 21 20"
       fill="none"
       {...props}

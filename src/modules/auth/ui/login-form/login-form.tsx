@@ -14,6 +14,7 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import { HOST, PORT } from "../../../../shared/base-url";
 
 export function LoginForm() {
 	const schema = yup.object().shape({

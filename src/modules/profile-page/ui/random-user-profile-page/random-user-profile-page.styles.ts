@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
-        width: "100%",
+        width: "80%",
         paddingHorizontal: 48,
         marginBottom: 16,
     },

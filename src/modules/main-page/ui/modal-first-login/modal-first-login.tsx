@@ -8,6 +8,7 @@ import { IUserAdditionalInfo } from "../../types/post";
 import { ICONS } from "../../../../shared/ui/icons";
 import { useAuthContext } from "../../../auth/context";
 import { Response } from "../../../../shared/types";
+import { HOST, PORT } from "../../../../shared/base-url";
 
 interface ModalFirstLoginProps {
 	isVisible: boolean;
@@ -27,8 +28,8 @@ export function ModalFirstLogin({
 		setValue,
 	} = useForm<IUserAdditionalInfo>({
 		defaultValues: {
-			name: "",
-			surname: "",
+			first_name: "",
+			last_name: "",
 			username: "",
 		},
 	});
@@ -36,11 +37,12 @@ export function ModalFirstLogin({
 	const { token, getData } = useAuthContext();
 
 	function onSubmit(data: IUserAdditionalInfo) {
+		// console.log(data)
 		async function sendRequest() {
 			try {
-				if (!token) return
+				if (!token) return;
 				const res = await fetch(
-					"http://192.168.3.11:3011/user/update-first-login",
+					`http://${HOST}/user/update-first-login`,
 					{
 						method: "POST",
 						headers: {
@@ -51,34 +53,28 @@ export function ModalFirstLogin({
 					}
 				);
 				const result: Response<string> = await res.json();
-				if (result.status === "error") return
+				if (result.status === "error") return;
 				setJustRegistered(false);
-				getData(token)
+				getData(token);
 				onRefresh?.();
 			} catch (error) {
 				console.log("Помилка при оновленні:", (error as Error).message);
 			}
 		}
-		sendRequest()
+		sendRequest();
 	}
 
 	return (
 		<View>
 			<ModalTool
 				isVisible={isVisible}
-				onClose={() => {
-					setJustRegistered(false);
-				}}
+				onClose={() => setJustRegistered(false)}
 				animationIn="fadeIn"
 				animationOut="fadeOut"
 			>
 				<View style={styles.containerMainView}>
 					<View style={{ alignSelf: "flex-end" }}>
-						<TouchableOpacity
-							onPress={() => {
-								setJustRegistered(false);
-							}}
-						>
+						<TouchableOpacity onPress={() => setJustRegistered(false)}>
 							<ICONS.CloseIcon width={15} height={15} />
 						</TouchableOpacity>
 					</View>
@@ -92,7 +88,7 @@ export function ModalFirstLogin({
 							<Text style={styles.inputLabelText}>Ім’я</Text>
 							<Controller
 								control={control}
-								name="name"
+								name="first_name"
 								render={({ field, fieldState }) => (
 									<Input
 										placeholder="Введіть Ваше ім’я"
@@ -108,7 +104,7 @@ export function ModalFirstLogin({
 							<Text style={styles.inputLabelText}>Прізвище</Text>
 							<Controller
 								control={control}
-								name="surname"
+								name="last_name"
 								render={({ field, fieldState }) => (
 									<Input
 										placeholder="Введіть Ваше прізвище"
@@ -121,9 +117,7 @@ export function ModalFirstLogin({
 							/>
 						</View>
 						<View style={{ paddingBottom: 16 }}>
-							<Text style={styles.inputLabelText}>
-								Нікнейм користувача
-							</Text>
+							<Text style={styles.inputLabelText}>Нікнейм користувача</Text>
 							<Controller
 								control={control}
 								name="username"

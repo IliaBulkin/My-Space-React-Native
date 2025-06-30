@@ -9,10 +9,14 @@ import { Response } from "../../../../shared/types";
 import { ProfileCard } from "../../../../shared/ui/profileCard";
 import { ButtonEdit } from "../buttonEdit";
 import { Controller, useForm } from "react-hook-form";
+import { HOST, PORT } from "../../../../shared/base-url";
 
 export function Avatar() {
 	const [avatar, setAvatar] = useState<string>("");
 
+	// useEffect(() => {
+	// 	console.log(avatar);
+	// }, [avatar]);
 	const { token, getData, user } = useAuthContext();
 
 	const [editable, setEditable] = useState<boolean>(false);
@@ -21,20 +25,26 @@ export function Avatar() {
 		{
 			defaultValues: {
 				username: "",
-				image: "",
+				avatar: "",
 			},
 		}
 	);
 
 	if (!user) {
-		throw Error("Ви не авторизовані");
+		return null
 	}
 
 	useEffect(() => {
 		if (user) {
 			setValue("username", user.username ? user.username : "");
-			setValue("image", user.image ? user.image : "");
-			setAvatar(user.image ? user.image : "");
+			const avatarPath = user.profile?.avatars?.[0]?.image;
+
+			const avatarUrl = avatarPath
+				? `http://${HOST}/media/${avatarPath}`
+				: "";
+
+			setValue("avatar", avatarUrl);
+			setAvatar(avatarUrl);
 		}
 	}, [user]);
 
@@ -44,11 +54,17 @@ export function Avatar() {
 				const image = await pickImage({
 					allowsMultipleSelection: false,
 					base64: true,
+					
 				});
-				if (!image) return;
-				if (!image[0].base64) return;
-				setAvatar(image[0].base64);
-				setValue("image", image[0].base64);
+
+				if (!image || !image[0].base64) return;
+
+				let mimeType = image[0].mimeType
+				if (mimeType === "image/") {
+					mimeType = "image/jpeg"
+				}
+				const base64WithPrefix = `data:${mimeType};base64,${image[0].base64}`;
+				setAvatar(base64WithPrefix);
 			} catch (error) {
 				console.log((error as Error).message);
 			}
@@ -56,8 +72,9 @@ export function Avatar() {
 		pickImageAsync();
 	}
 
+
 	function deleteAvatar() {
-		setValue("image", "");
+		setValue("avatar", "");
 		setAvatar("");
 	}
 
@@ -67,7 +84,7 @@ export function Avatar() {
 				if (!token) return;
 
 				const res = await fetch(
-					"http://192.168.3.11:3011/user/update-avatar",
+					`http://${HOST}/user/update-avatar`,
 					{
 						method: "POST",
 						headers: {
@@ -109,7 +126,11 @@ export function Avatar() {
 				/>
 			</View>
 			<View style={styles.avatar}>
-				{editable && <Text style={styles.topText}>Оберіть або завантажте фото профілю</Text>}
+				{editable && (
+					<Text style={styles.topText}>
+						Оберіть або завантажте фото профілю
+					</Text>
+				)}
 
 				<View style={styles.view}>
 					{avatar ? (
@@ -119,7 +140,7 @@ export function Avatar() {
 								width: 150,
 								borderRadius: 150,
 							}}
-							source={{ uri: "data:image/jpeg;base64," + avatar }}
+							source={{ uri: avatar }}
 						/>
 					) : (
 						<ICONS.AnonymousLogoIcon width={160} height={160} />
@@ -133,7 +154,10 @@ export function Avatar() {
 									pickImageHandler();
 								}}
 							>
-								<ICONS.PlusWithoutBorder width={17} height={17} />
+								<ICONS.PlusWithoutBorder
+									width={17}
+									height={17}
+								/>
 								<Text style={styles.textAvatar}>
 									Додати фото
 								</Text>
@@ -154,7 +178,7 @@ export function Avatar() {
 					)}
 
 					<Text style={styles.nameSurname}>
-						{user?.surname} {user?.name}
+						{user?.last_name} {user?.first_name}
 					</Text>
 
 					{editable ? (

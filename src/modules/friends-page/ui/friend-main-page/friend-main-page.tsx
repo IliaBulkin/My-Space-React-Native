@@ -5,23 +5,27 @@ import { HeaderNavigationFriendPages } from "../header-navigation-friends-page";
 import { FriendRequest } from "../friend-component/friend-request-component";
 import { FriendCard, FriendRequestType } from "../../types/friend-info";
 import { styles } from "./friend-main-page.styles";
+import { HOST, PORT } from "../../../../shared/base-url";
+import { useRouter } from "expo-router";
 
 export function FriendMainPage() {
 	const [requests, setRequests] = useState<FriendRequestType[]>([]);
 	const [recommendations, setRecommendations] = useState<FriendCard[]>([]);
 	const [friends, setFriends] = useState<FriendCard[]>([]);
 
+	const router = useRouter()
+
 	const loadData = async () => {
 		const token = await AsyncStorage.getItem("token");
 
 		const [requestsRes, usersRes, friendsRes] = await Promise.all([
-			fetch("http://192.168.3.11:3011/friend/pending-requests", {
+			fetch(`http://${HOST}/friend/pending-requests`, {
 				headers: { Authorization: `Bearer ${token}` },
 			}),
-			fetch("http://192.168.3.11:3011/friend/all-users", {
+			fetch(`http://${HOST}/friend/all-users`, {
 				headers: { Authorization: `Bearer ${token}` },
 			}),
-			fetch("http://192.168.3.11:3011/friend/all-friends", {
+			fetch(`http://${HOST}/friend/all-friends`, {
 				headers: { Authorization: `Bearer ${token}` },
 			}),
 		]);
@@ -30,20 +34,24 @@ export function FriendMainPage() {
 		const usersJson = await usersRes.json();
 		const friendsJson = await friendsRes.json();
 
-		const filteredRequests = (
-			requestsJson.requests as FriendRequestType[]
-		).filter((r) => !r.isAccepted);
+		// const filteredRequests = (
+		// 	requestsJson.requests as FriendRequestType[]
+		// ).filter((r) => !r.isAccepted);
 
-		setRequests(filteredRequests.slice(0, 2));
+		setRequests(requestsJson.requests.slice(0, 2));
 		setRecommendations(usersJson.users.slice(0, 2));
 		setFriends(friendsJson.friends.slice(0, 2));
 	};
 
+	// useEffect(() => {
+	// 	console.log(friends)
+	// }, [friends])
+
 	const respondRequest = async (id: number, accept: boolean) => {
 		const token = await AsyncStorage.getItem("token");
 		const url = accept
-			? `http://192.168.3.11:3011/friend/accept-request`
-			: `http://192.168.3.11:3011/friend/reject-request`;
+			? `http://${HOST}/friend/accept-request`
+			: `http://${HOST}/friend/reject-request`;
 
 		await fetch(url, {
 			method: "POST",
@@ -74,7 +82,7 @@ export function FriendMainPage() {
 					>
 						Запити
 					</Text>
-					<TouchableOpacity>
+					<TouchableOpacity onPress={() => {router.replace("/friend-request/")}}>
 						<Text
 							style={[
 								styles.mainNavigationText,
@@ -88,8 +96,6 @@ export function FriendMainPage() {
 				<View style={{ width: "100%", alignItems: "center" }}>
 					{requests.length > 0 ? (
 						requests.map((item) => {
-							const user = item.fromUserDetails;
-							if (!user) return null;
 							return (
 								<View
 									style={{
@@ -97,14 +103,10 @@ export function FriendMainPage() {
 										alignItems: "center",
 										marginBottom: 10,
 									}}
+									key={item.id.toString()}
 								>
 									<FriendRequest
-										key={item.id.toString()}
-										id={user.id}
-										image={user.image}
-										name={user.name}
-										surname={user.surname}
-										username={user.username}
+										{...item}
 										onAccept={() =>
 											respondRequest(item.id, true)
 										}
@@ -138,7 +140,7 @@ export function FriendMainPage() {
 					>
 						Рекомендації
 					</Text>
-					<TouchableOpacity>
+					<TouchableOpacity onPress={() => {router.replace("/friend-recommendation/")}}>
 						<Text
 							style={[
 								styles.mainNavigationText,
@@ -158,17 +160,11 @@ export function FriendMainPage() {
 									alignItems: "center",
 									marginBottom: 10,
 								}}
+									key={user.id}
 							>
 								<FriendRequest.FriendSendRequest
-									key={user.id}
 									{...user}
-									onReject={() =>
-										setRecommendations((prev) =>
-											prev.filter(
-												(us) => us.id !== user.id
-											)
-										)
-									}
+									onRefresh={loadData}
 								/>
 							</View>
 						))
@@ -195,7 +191,7 @@ export function FriendMainPage() {
 					>
 						Всі друзі
 					</Text>
-					<TouchableOpacity>
+					<TouchableOpacity onPress={() => {router.replace("/friend-all/")}}>
 						<Text
 							style={[
 								styles.mainNavigationText,
@@ -215,10 +211,11 @@ export function FriendMainPage() {
 									alignItems: "center",
 									marginBottom: 10,
 								}}
+								key={friend.id}
 							>
 								<FriendRequest.FriendItem
-									key={friend.id}
 									{...friend}
+									onRefresh={loadData}
 								/>
 							</View>
 						))

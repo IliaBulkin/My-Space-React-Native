@@ -15,6 +15,7 @@ export const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		color: "#070A1C",
+		marginBottom: 16
 	},
 	search: {
 		backgroundColor: "#FFFFFF",
@@ -26,6 +27,7 @@ export const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 13,
+		marginBottom: 16
 	},
 	contactsList: {
 		gap: 16,

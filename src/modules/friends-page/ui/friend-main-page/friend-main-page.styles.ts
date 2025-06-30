@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
         marginBottom: 8
 	},
 	mainNavigationView: {
-		height: 20,
+		height: 22,
 		width: "95%",
 		flexDirection: "row",
 		justifyContent: "space-between",

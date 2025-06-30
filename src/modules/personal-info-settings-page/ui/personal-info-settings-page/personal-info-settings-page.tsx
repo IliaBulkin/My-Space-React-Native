@@ -26,14 +26,16 @@ import parsePhoneNumberFromString, {
 import { format } from "date-fns";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ButtonEdit } from "../buttonEdit";
+import { HOST, PORT } from "../../../../shared/base-url";
+import { ChangePassword } from "../change-password";
 
 interface IPersonalInfoFormData {
-	name: string;
-	surname: string;
+	first_name: string;
+	last_name: string;
 	// username: string;
 	email: string;
-	phoneNumber: string;
-	birthDate: Date | null;
+	// phoneNumber: string;
+	date_of_birth: Date | null;
 }
 
 export function PersonalInfoSettingsPage() {
@@ -42,73 +44,55 @@ export function PersonalInfoSettingsPage() {
 
 	const [editable, setEditable] = useState<boolean>(false);
 
-
 	const [show, setShow] = useState(false);
 
 	function showDatepicker() {
 		setShow(true);
 	}
 
-	if (!user) {
-		throw Error("Ви не авторизовані!");
-	}
-
 	const { control, handleSubmit, setValue, getValues } =
 		useForm<IPersonalInfoFormData>({
 			defaultValues: {
-				name: "",
-				surname: "",
-				birthDate: null,
+				first_name: "",
+				last_name: "",
+				date_of_birth: null,
 				email: "",
-				phoneNumber: "",
-				// username: "",
 			},
 		});
-
+	if (!user) {
+		return null;
+	}
 	useEffect(() => {
 		if (user) {
-			setValue("name", user.name ? user.name : "");
-			setValue("surname", user.surname ? user.surname : "");
+			setValue("first_name", user.first_name ? user.first_name : "");
+			setValue("last_name", user.last_name ? user.last_name : "");
 			setValue(
-				"birthDate",
-				user.birthDate ? new Date(user.birthDate) : null
+				"date_of_birth",
+				user.profile?.date_of_birth
+					? new Date(user.profile.date_of_birth)
+					: null
 			);
 			setValue("email", user.email ? user.email : "");
-			// setValue("username", user.username ? user.username : "");
-			setValue(
-				"phoneNumber",
-				user.phoneNumber
-					? parsePhoneNumberFromString(
-							user.phoneNumber
-					  )!.formatInternational()
-					: ""
-			);
 		}
 	}, [user]);
 
 	function onSubmit(data: IPersonalInfoFormData) {
-		console.log("1", data);
-
 		async function sendRequest() {
 			try {
 				if (!token) {
-					return
-				};
-				const res = await fetch(
-					"http://192.168.3.11:3011/user/update",
-					{
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							Authorization: `Bearer ${token}`,
-						},
-						body: JSON.stringify(data),
-					}
-				);
+					return;
+				}
+				const res = await fetch(`http://${HOST}/user/update`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify(data),
+				});
 				const result: Response<string> = await res.json();
 				getData(token);
 				setEditable(false);
-				console.log("4", result);
 			} catch (error) {
 				console.log((error as Error).message);
 			}
@@ -137,21 +121,22 @@ export function PersonalInfoSettingsPage() {
 							onPress={() => {
 								if (editable) {
 									handleSubmit(onSubmit)();
-								} else{
-									setEditable(true)
+								} else {
+									setEditable(true);
 								}
-								
 							}}
 						/>
 					</View>
 
 					<Controller
 						control={control}
-						name="name"
+						name="first_name"
 						render={({ field, fieldState }) => (
 							<ProfileCard
 								placeholder={
-									user.name ? undefined : "Не вказано :("
+									user.first_name
+										? undefined
+										: "Не вказано :("
 								}
 								label="Ім'я"
 								type="text"
@@ -165,11 +150,11 @@ export function PersonalInfoSettingsPage() {
 
 					<Controller
 						control={control}
-						name="surname"
+						name="last_name"
 						render={({ field, fieldState }) => (
 							<ProfileCard
 								placeholder={
-									user.surname ? undefined : "Не вказано :("
+									user.last_name ? undefined : "Не вказано :("
 								}
 								label="Прізвище"
 								type="text"
@@ -185,8 +170,10 @@ export function PersonalInfoSettingsPage() {
 						control={control}
 						name="email"
 						rules={{
-							required: {value: true, message: "Пошта не може бути порожньою!"},
-							
+							required: {
+								value: true,
+								message: "Пошта не може бути порожньою!",
+							},
 						}}
 						render={({ field, fieldState }) => (
 							<ProfileCard
@@ -205,35 +192,7 @@ export function PersonalInfoSettingsPage() {
 
 					<Controller
 						control={control}
-						name="phoneNumber"
-						rules={{
-							validate: (value) => {
-								if (value === "") return true;
-								if (!isValidPhoneNumber(value))
-									return "Невалідний номер телефона";
-								return true;
-							},
-						}}
-						render={({ field, fieldState }) => (
-							<ProfileCard
-								placeholder={
-									user.phoneNumber
-										? undefined
-										: "Не вказано :("
-								}
-								label="Мобільний (з кодом країни)"
-								type="tel"
-								editable={editable}
-								value={field.value}
-								onChangeText={field.onChange}
-								errorMessage={fieldState.error?.message}
-							/>
-						)}
-					/>
-
-					<Controller
-						control={control}
-						name="birthDate"
+						name="date_of_birth"
 						render={({ field }) => {
 							return (
 								<>
@@ -267,10 +226,6 @@ export function PersonalInfoSettingsPage() {
 											onChange={(event, selectedDate) => {
 												setShow(Platform.OS === "ios");
 												if (!selectedDate) return;
-												console.log(
-													"onChange",
-													selectedDate
-												);
 												field.onChange(selectedDate);
 											}}
 											maximumDate={new Date()}
@@ -282,6 +237,7 @@ export function PersonalInfoSettingsPage() {
 						}}
 					/>
 				</View>
+				<ChangePassword />
 			</View>
 		</ScrollView>
 	);

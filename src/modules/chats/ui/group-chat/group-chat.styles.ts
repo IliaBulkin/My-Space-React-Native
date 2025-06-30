@@ -8,6 +8,7 @@ export const styles = StyleSheet.create({
 		borderRadius: 10,
 		padding: 16,
 		marginTop: 6,
+		flex: 1
 	},
 	header: {
 		flexDirection: "row",

@@ -42,22 +42,22 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 	} = usePost();
 
 	const schema = yup.object().shape({
-		name: yup.string().required("Це поле обов'язкове"),
-		description: yup.string().required("Це поле обов'язкове"),
-		image: yup.array().required("Додайте хоча б одне зображення"),
-		defaultTags: yup.array().required("Додайте хоча б дефолтний один тег"),
-		customTags: yup.array().required("Додайте хоча б кастомний один тег"),
+		title: yup.string().required("Це поле обов'язкове"),
+		content: yup.string().required("Це поле обов'язкове"),
+		images: yup.array().required("Додайте хоча б одне зображення"),
+		existingTags: yup.array().required("Додайте хоча б дефолтний один тег"),
+		newTags: yup.array().required("Додайте хоча б кастомний один тег"),
 		link: yup.array().required("Додайте хочаб одне посилання"),
 	});
 
 	const { handleSubmit, control, formState, setValue, setError } =
 		useForm<IUserPost>({
 			defaultValues: {
-				name: "",
-				description: "",
-				image: [],
-				defaultTags: [],
-				customTags: [],
+				title: "",
+				content: "",
+				images: [],
+				existingTags: [],
+				newTags: [],
 				link: [],
 			},
 			resolver: yupResolver(schema),
@@ -70,25 +70,54 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 
 	async function closingModal() {
 		closeCreateModal();
-		setValue("name", "");
-		setValue("description", "");
+		setValue("title", "");
+		setValue("content", "");
 		setImages([]);
-		setValue("image", []);
-		setValue("defaultTags", []);
-		setValue("customTags", []);
+		setValue("images", []);
+		setValue("existingTags", []);
+		setValue("newTags", []);
 		setValue("link", []);
 	}
 
 	function removeImage(index: number) {
 		const updatedImages = images.filter((_, i) => i !== index);
 		setImages(updatedImages);
-		setValue("image", updatedImages);
+		setValue("images", updatedImages);
 	}
 
-	async function onSearch() {
-		const result = await requestMediaLibraryPermissionsAsync();
+	// async function onSearch() {
+	// 	const result = await requestMediaLibraryPermissionsAsync();
 
-		if (result.status === "granted") {
+	// 	if (result.status === "granted") {
+	// 		const selected = await launchImageLibraryAsync({
+	// 			mediaTypes: "images",
+	// 			allowsMultipleSelection: true,
+	// 			selectionLimit: 9,
+	// 			base64: true,
+	// 		});
+
+	// 		if (selected.assets) {
+	// 			const bases64 = selected.assets
+	// 				.map((asset) => asset.base64)
+	// 				.filter(
+	// 					(base64): base64 is string => typeof base64 === "string"
+	// 				);
+
+	// 			if (bases64.length === 0) {
+	// 				return 0;
+	// 			}
+
+	// 			setImages(bases64);
+	// 			setValue("images", bases64);
+	// 		}
+	// 	}
+	// }
+	async function onSearch() {
+		try {
+			const result = await requestMediaLibraryPermissionsAsync();
+
+			if (result.status !== "granted") return;
+
 			const selected = await launchImageLibraryAsync({
 				mediaTypes: "images",
 				allowsMultipleSelection: true,
@@ -96,29 +125,48 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 				base64: true,
 			});
 
-			if (selected.assets) {
-				const bases64 = selected.assets
-					.map((asset) => asset.base64)
-					.filter(
-						(base64): base64 is string => typeof base64 === "string"
-					);
+			if (!selected.assets) return;
 
-				if (bases64.length === 0) {
-					return 0;
-				}
+			const base64WithMime = selected.assets
+				.map((asset) => {
+					if (!asset.base64) return null;
 
-				setImages(bases64);
-				setValue("image", bases64);
-			}
+					let mimeType = asset.mimeType;
+
+					// fallback if mimeType is missing or "image/"
+					if (mimeType === "image/") {
+						mimeType = "image/jpeg"
+					}
+
+					return `data:${mimeType};base64,${asset.base64}`;
+				})
+				.filter(
+					(base64): base64 is string => typeof base64 === "string"
+				);
+
+			if (base64WithMime.length === 0) return;
+
+			setImages([...images, ...base64WithMime]);
+			setValue("images", [...images, ...base64WithMime]);
+		} catch (error) {
+			console.log((error as Error).message);
 		}
 	}
 
+	useEffect(() => {
+		images.forEach((image) => {
+			console.log(image.slice(0, 25))
+		})
+	}, [images])
+
 	function onSubmit(data: IUserPost) {
+
 		async function request() {
 			const response = await createPost(data);
 			onRefresh?.();
 			closingModal();
 		}
+
 		request();
 	}
 
@@ -128,6 +176,9 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 				<ScrollView
 					style={styles.mainModalWindow}
 					overScrollMode="never"
+					contentContainerStyle={{
+						paddingBottom: images.length > 0 ? 44 : 0,
+					}}
 				>
 					<View style={styles.closeModalButton}>
 						<TouchableOpacity onPress={closingModal}>
@@ -154,7 +205,7 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 							</Text>
 							<Controller
 								control={control}
-								name="name"
+								name="title"
 								render={({ field, fieldState }) => {
 									return (
 										<Input
@@ -172,7 +223,7 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 							/>
 							<Controller
 								control={control}
-								name="description"
+								name="content"
 								render={({ field, fieldState }) => {
 									return (
 										<Input
@@ -196,7 +247,7 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 						<View style={{ marginTop: 16 }}>
 							<Controller
 								control={control}
-								name="defaultTags"
+								name="existingTags"
 								render={({ field }) => (
 									<TagsMultiSelect
 										selectedTags={field.value}
@@ -209,7 +260,7 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 						<View>
 							<Controller
 								control={control}
-								name="customTags"
+								name="newTags"
 								render={({ field }) => (
 									<TagsCustomInput
 										value={field.value}
@@ -262,7 +313,7 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 									<Image
 										source={{
 											uri:
-												"data:image/jpeg;base64," + uri,
+												uri,
 										}}
 										style={{
 											width: 100,
@@ -300,9 +351,9 @@ export function ModalPublicationPost({ onRefresh }: ModalPublicationPostProps) {
 						<TouchableOpacity onPress={onSearch}>
 							<ICONS.ImageWithStylesIcon />
 						</TouchableOpacity>
-						<TouchableOpacity>
+						{/* <TouchableOpacity>
 							<ICONS.EmojiWithStylesIcon />
-						</TouchableOpacity>
+						</TouchableOpacity> */}
 						<TouchableOpacity onPress={handleSubmit(onSubmit)}>
 							<View style={styles.sendPostModalButton}>
 								<Text

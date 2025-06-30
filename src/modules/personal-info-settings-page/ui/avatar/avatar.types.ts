@@ -1,11 +1,11 @@
 
 
 export interface IAvatarProps{
-    image?: string
+    images?: string
 }
 
 
 export interface IAvatarForm {
     username: string
-    image: string
+    avatar: string
 }

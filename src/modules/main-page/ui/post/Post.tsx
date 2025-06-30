@@ -2,16 +2,38 @@ import { View, Text, Image, TouchableOpacity } from "react-native";
 import { IPostProps } from "../../types/post-info";
 import { styles } from "./post.styles";
 import { ICONS } from "../../../../shared/ui/icons";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { ModalThreeDots } from "../modal-three-dots/modal-three-dots";
+import { useAuthContext } from "../../../auth/context";
+import { useRouter } from "expo-router";
+import { HOST, PORT } from "../../../../shared/base-url";
+import { useFetchPosts } from "../../hooks/useFetchPosts";
+import { HTTPS_HOST } from "../../../../shared/base-url/base-url";
 
-export function PublicatedPost(props: IPostProps) {
-	const { id, name, text, hashtags, photo, likes, views, user } = props;
+export function PublicatedPost(props: IPostProps & { onRefresh: () => void }) {
+	const {
+		id,
+		title,
+		content,
+		tags,
+		images,
+		likes,
+		views,
+		links,
+		author,
+		author_id,
+	} = props;
+
+	const router = useRouter();
 
 	const [isLiked, setIsLiked] = useState<boolean>(false);
 
 	const [isSettingsVisible, setSettingsVisible] = useState(false);
+
+	const [isFriend, setIsFriend] = useState(false);
+
+	const { user: currentUser } = useAuthContext();
 
 	const { width: screenWidth } = useWindowDimensions();
 
@@ -43,6 +65,7 @@ export function PublicatedPost(props: IPostProps) {
 		}
 	}
 
+
 	const [modalPosition, setModalPosition] = useState<{
 		top: number;
 		left: number;
@@ -50,7 +73,40 @@ export function PublicatedPost(props: IPostProps) {
 	const dotsRef = useRef<View>(null);
 
 	let photoIndex = 0;
-	const rows = photo ? getPhotosPerRow(photo.length) : [];
+	const rows = images ? getPhotosPerRow(images.length) : [];
+
+	const handleProfilePress = async () => {
+		if (!author.user?.id || !currentUser?.id) return;
+
+		if (author.user.id === currentUser.id) {
+			console.log("user");
+			router.replace("/user-profile");
+		} else {
+			try {
+				const res = await fetch(
+					`http://${HOST}/friend/check/${currentUser.id}/${author.user.id}`
+				);
+				const data = await res.json();
+				if (data.isFriend) {
+					console.log("friend");
+
+					router.replace({
+						pathname: "/friend-profile",
+						params: { userId: String(author_id) },
+					});
+				} else {
+					console.log("another-user");
+					router.replace({
+						pathname: "/another-user-profile",
+						params: { userId: String(author_id) },
+					});
+				}
+			} catch (err) {
+				console.error("Ошибка при проверке дружбы", err);
+				router.push("/another-user-profile");
+			}
+		}
+	};
 
 	return (
 		<View>
@@ -59,48 +115,61 @@ export function PublicatedPost(props: IPostProps) {
 				isVisible={isSettingsVisible}
 				setIsVisible={setSettingsVisible}
 				modalPosition={modalPosition}
+				onRefresh={props.onRefresh}
 			/>
 			<View style={styles.post}>
 				<View style={styles.top}>
-					<View style={styles.userInfo}>
-						{user?.image ? (
+					<TouchableOpacity
+						style={styles.userInfo}
+						onPress={handleProfilePress}
+					>
+						{author.user?.profile?.avatars?.length &&
+						author.user.profile.avatars.length > 0 ? (
 							<Image
 								style={styles.avatar}
-								source={{ uri: user.image }}
+								source={{
+									uri:
+										HTTPS_HOST +
+										"/media/" +
+										author.user.profile.avatars[0]?.image,
+								}}
 							/>
 						) : (
 							<ICONS.AnonymousLogoIcon width={36} height={36} />
 						)}
+
 						<Text style={styles.name}>
-							{user?.username ??
-								user?.email?.split("@")[0] ??
+							{author.user?.username ??
+								author.user?.email?.split("@")[0] ??
 								"Анонім"}
 						</Text>
-					</View>
-					<TouchableOpacity
-						ref={dotsRef}
-						onPress={() => {
-							dotsRef.current?.measureInWindow((x, y) => {
-								setModalPosition({
-									top: y - 40,
-									left: x - 330 + 20,
-								});
-								setSettingsVisible(true);
-							});
-						}}
-					>
-						<View style={styles.actions}>
-							<ICONS.DotsIcon />
-						</View>
 					</TouchableOpacity>
+					{author.user.id === currentUser?.id && (
+						<TouchableOpacity
+							ref={dotsRef}
+							onPress={() => {
+								dotsRef.current?.measureInWindow((x, y) => {
+									setModalPosition({
+										top: y - 20,
+										left: x - 330 + 20,
+									});
+									setSettingsVisible(true);
+								});
+							}}
+						>
+							<View style={styles.actions}>
+								<ICONS.DotsIcon />
+							</View>
+						</TouchableOpacity>
+					)}
 				</View>
 
 				<View style={styles.content}>
-					<Text style={styles.name}>{name}</Text>
-					<Text style={styles.text}>{text}</Text>
+					<Text style={styles.name}>{title}</Text>
+					<Text style={styles.text}>{content}</Text>
 					<View style={styles.hashtags}>
-						{hashtags
-							? hashtags.map((tag, i) => (
+						{tags
+							? tags.map((tag, i) => (
 									<Text key={i} style={styles.hashtag}>
 										#{tag}
 									</Text>
@@ -108,10 +177,53 @@ export function PublicatedPost(props: IPostProps) {
 							: undefined}
 					</View>
 
-					{photo ? (
+					{links && links.length > 0 && (
+						<View
+							style={{
+								flexDirection: "row",
+								flexWrap: "wrap",
+								gap: 8,
+								// marginTop: 12,
+							}}
+						>
+							{links.map((url, index) => (
+								<TouchableOpacity
+									key={index}
+									onPress={() => {
+										import("react-native").then(
+											({ Linking }) =>
+												Linking.openURL(url)
+										);
+									}}
+									style={{
+										paddingVertical: 6,
+										paddingHorizontal: 12,
+										borderRadius: 12,
+										borderWidth: 1,
+										borderColor: "#543C52",
+										backgroundColor: "white",
+									}}
+								>
+									<Text
+										style={{
+											color: "#543C52",
+											fontSize: 14,
+										}}
+										numberOfLines={1}
+									>
+										{url.length > 30
+											? url.slice(0, 30) + "..."
+											: url}
+									</Text>
+								</TouchableOpacity>
+							))}
+						</View>
+					)}
+
+					{images ? (
 						<View style={{ gap: GAP }}>
 							{rows.map((countInRow, rowIdx) => {
-								const photosInRow = photo.slice(
+								const photosInRow = images.slice(
 									photoIndex,
 									photoIndex + countInRow
 								);
@@ -135,14 +247,15 @@ export function PublicatedPost(props: IPostProps) {
 													totalGap) /
 												countInRow;
 											const aspectRatio = 167.5 / 203; // расчитываем размер исходя из размера экрана
-
 											return (
 												<Image
 													key={i}
 													source={{
 														uri:
-															"data:image/jpeg;base64," +
-															url,
+															HTTPS_HOST +
+															url.split(
+																"3011"
+															)[1],
 													}}
 													style={{
 														width,
@@ -159,7 +272,7 @@ export function PublicatedPost(props: IPostProps) {
 						</View>
 					) : null}
 
-					<View style={styles.reactions}>
+					{/* <View style={styles.reactions}>
 						<View style={styles.postActions}>
 							<TouchableOpacity
 								style={styles.reaction}
@@ -184,7 +297,7 @@ export function PublicatedPost(props: IPostProps) {
 								{views} Переглядів
 							</Text>
 						</View>
-					</View>
+					</View> */}
 				</View>
 			</View>
 		</View>

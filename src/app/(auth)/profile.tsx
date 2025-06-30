@@ -6,10 +6,10 @@ export default function Profile() {
 
     return (
         <View style={{flex: 1}}>
-            <Text style={{color: "white"}}>{user?.name}</Text>
-            <Text style={{color: "white"}}>{user?.surname}</Text>
+            <Text style={{color: "white"}}>{user?.first_name}</Text>
+            <Text style={{color: "white"}}>{user?.last_name}</Text>
             <Text style={{color: "white"}}>{user?.email}</Text>
-            <Text style={{color: "white"}}>{user?.phoneNumber}</Text>
+            {/* <Text style={{color: "white"}}>{user?.phoneNumber}</Text> */}
             {/* <Text style={{color: "white"}}>{user?.birthDate}</Text> */}
             <Text style={{color: "white"}}>@{user?.username}</Text>
             

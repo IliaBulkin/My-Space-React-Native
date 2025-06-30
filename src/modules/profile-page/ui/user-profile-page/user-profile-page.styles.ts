@@ -37,9 +37,9 @@ export const styles = StyleSheet.create({
 	},
 	statsContainer: {
 		flexDirection: "row",
-		justifyContent: "space-between",
+		justifyContent: "space-around",
 		width: "100%",
-		paddingHorizontal: 48,
+		// paddingHorizontal: 48,
 	},
 	statBlock: {
 		alignItems: "center",

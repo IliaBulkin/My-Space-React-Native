@@ -1,1 +1,1 @@
-export { FrinedProfilePage } from "./randon-user-profile-page"
+export { AnotherUserProfilePage } from "./random-user-profile-page"

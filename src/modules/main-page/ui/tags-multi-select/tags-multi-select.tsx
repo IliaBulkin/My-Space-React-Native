@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { ICONS } from "../../../../shared/ui/icons";
 import { styles } from "./tags-multi-select.styles";
+import { HOST, PORT } from "../../../../shared/base-url";
 
 type Tag = {
 	id: string;
@@ -22,8 +23,6 @@ type Props = {
 };
 
 export function TagsMultiSelect({ selectedTags, onChange }: Props) {
-	const BASE_URL = "192.168.3.11:3011";
-
 	const [tags, setTags] = useState<Tag[]>([]);
 	const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
 	const [inputVisible, setInputVisible] = useState(false);
@@ -34,7 +33,7 @@ export function TagsMultiSelect({ selectedTags, onChange }: Props) {
 		const fetchTags = async () => {
 			try {
 				const response = await fetch(
-					`http://${BASE_URL}/post/find-all-tags`
+					`http://${HOST}/post/find-all-tags`
 				);
 				if (!response.ok)
 					throw new Error(`HTTP error! status: ${response.status}`);

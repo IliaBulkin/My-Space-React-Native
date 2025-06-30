@@ -3,9 +3,18 @@ import { IInputProps } from "./input.types";
 import { styles } from "./input.styles";
 import { ICONS } from "../icons";
 import { useEffect, useRef, useState } from "react";
+import { useSocketContext } from "../../../modules/chats/context/socket.context";
 
 function Input(props: IInputProps) {
-	const { label, iconLeft, iconRight, errorMessage, height = 42, isTextArea = false, ...otherProps } = props;
+	const {
+		label,
+		iconLeft,
+		iconRight,
+		errorMessage,
+		height = 42,
+		isTextArea = false,
+		...otherProps
+	} = props;
 
 	return (
 		<View>
@@ -13,7 +22,13 @@ function Input(props: IInputProps) {
 			<View style={[styles.inputBox, { height }]}>
 				{iconLeft && <View style={{ marginRight: 2 }}>{iconLeft}</View>}
 				<TextInput
-					style={[styles.input, { height: "100%", textAlignVertical: isTextArea ? "top" : "center" }]}
+					style={[
+						styles.input,
+						{
+							height: "100%",
+							textAlignVertical: isTextArea ? "top" : "center",
+						},
+					]}
 					autoFocus={false}
 					placeholderTextColor={"#81818D"}
 					{...otherProps}
@@ -32,7 +47,11 @@ function Input(props: IInputProps) {
 	);
 }
 
-function Password(props: Omit<IInputProps, "iconLeft" | "iconRight"> & {showLeftIcon: boolean}) {
+function Password(
+	props: Omit<IInputProps, "iconLeft" | "iconRight"> & {
+		showLeftIcon: boolean;
+	}
+) {
 	const { label, errorMessage, showLeftIcon, ...otherProps } = props;
 	const [isHidden, setIsHidden] = useState(true);
 
@@ -40,12 +59,12 @@ function Password(props: Omit<IInputProps, "iconLeft" | "iconRight"> & {showLeft
 		<View>
 			{label && <Text style={styles.label}>{label}</Text>}
 			<View style={styles.inputBox}>
-				{
-					showLeftIcon && <View style={{ marginRight: 2 }}>
+				{showLeftIcon && (
+					<View style={{ marginRight: 2 }}>
 						<ICONS.PasswordIcon width={30} height={30} />
 					</View>
-				}
-				
+				)}
+
 				<TextInput
 					secureTextEntry={isHidden}
 					style={styles.input}
@@ -146,10 +165,60 @@ function Code(props: Omit<IInputProps, "iconLeft" | "iconRight">) {
 	);
 }
 
-
+export function TypeMessage(props: IInputProps) {
+	const {
+		label,
+		iconLeft,
+		iconRight,
+		errorMessage,
+		height = 42,
+		isTextArea = false,
+		...otherProps
+	} = props;
+	const { socket } = useSocketContext();
+	const [value, setValue] = useState<string>("")
+	return (
+		<View>
+			{label && <Text style={styles.label}>{label}</Text>}
+			<View style={[styles.inputBox, { height }]}>
+				{iconLeft && <View style={{ marginRight: 2 }}>{iconLeft}</View>}
+				<TextInput
+					style={[
+						styles.input,
+						{
+							height: "100%",
+							textAlignVertical: isTextArea ? "top" : "center",
+						},
+					]}
+					autoFocus={false}
+					placeholderTextColor={"#81818D"}
+					onChangeText={(text) => {setValue(text)}}
+					{...otherProps}
+				/>
+				{iconRight && (
+					<TouchableWithoutFeedback
+						style={{ marginLeft: "auto" }}
+						onPress={() => {
+							socket?.emit("sendMessage", {
+								message: value,
+							});
+						}}
+					>
+						{iconRight}
+					</TouchableWithoutFeedback>
+				)}
+			</View>
+			{errorMessage && (
+				<View style={styles.errorBox}>
+					<ICONS.ErrorIcon width={16} height={16} />
+					<Text style={styles.errorMessage}>{errorMessage}</Text>
+				</View>
+			)}
+		</View>
+	);
+}
 
 Input.Password = Password;
 Input.Code = Code;
-
 
 export { Input };

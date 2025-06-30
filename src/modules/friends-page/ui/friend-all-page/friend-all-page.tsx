@@ -4,26 +4,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { HeaderNavigationFriendPages } from "../header-navigation-friends-page";
 import { FriendRequest } from "../friend-component/friend-request-component";
 import { FriendCard } from "../../types/friend-info";
-
-// interface Friend {
-// 	id: string;
-// 	name: string;
-// 	surname: string ;
-// 	username: string ;
-// 	image: string;
-// }
+import { HOST, PORT } from "../../../../shared/base-url";
 
 export function FriendAllPage() {
 	const [friends, setFriends] = useState<FriendCard[]>([]);
 
 	const fetchFriends = async () => {
 		const token = await AsyncStorage.getItem("token");
-		const res = await fetch("http://192.168.3.11:3011/friend/all-friends", {
+		const res = await fetch(`http://${HOST}/friend/all-friends`, {
 			headers: { Authorization: `Bearer ${token}` },
 		});
 		const data = await res.json();
 		setFriends(data.friends);
 	};
+
+	// useEffect(() => {
+	// 	console.log(friends)
+	// }, [friends])
 
 	useEffect(() => {
 		fetchFriends();
@@ -32,7 +29,7 @@ export function FriendAllPage() {
 	return (
 		<View style={{ flex: 1 }}>
 			<HeaderNavigationFriendPages />
-			{friends.length === 0 ? (
+			{friends && friends.length === 0 ? (
 				<Text
 					style={{
 						textAlign: "center",
@@ -48,17 +45,15 @@ export function FriendAllPage() {
 						width: "95%",
 						alignItems: "center",
 						paddingLeft: 24,
+						gap: 12
 					}}
 					overScrollMode="never"
 				>
-					{friends.map((friend) => (
+					{friends && friends.map((friend) => (
 						<FriendRequest.FriendItem
 							key={friend.id}
-							id={friend.id}
-							name={friend.name}
-							surname={friend.surname}
-							username={friend.username}
-							image={friend.image}
+							{...friend}
+							onRefresh={fetchFriends}
 						/>
 					))}
 				</ScrollView>

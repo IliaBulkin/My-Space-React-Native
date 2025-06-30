@@ -1,3 +1,3 @@
 export interface IHeaderProps {
-	isOnSettings: boolean;
+	page: "settings" | "friends" | "profile" | "chats" | "posts"
 }

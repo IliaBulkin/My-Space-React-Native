@@ -1,29 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import { FriendCard } from "../../types/friend-info";
+import { FriendCard, FriendRequestType } from "../../types/friend-info";
 import { ICONS } from "../../../../shared/ui/icons";
 import { styles } from "./friend-request-component.styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { HOST, PORT } from "../../../../shared/base-url";
+import { HTTPS_HOST } from "../../../../shared/base-url/base-url";
 
-export function FriendRequest({
-	id,
-	image,
-	name,
-	surname,
-	username,
-	onAccept,
-	onReject,
-}: FriendCard & {
-	onAccept: () => void;
-	onReject: () => void;
-}) {
+export function FriendRequest(
+	props: FriendRequestType & {
+		onAccept: () => void;
+		onReject: () => void;
+	}
+) {
+	// useEffect(() => {
+	// 	// console.log("friendrequesttt",props.avatars && props.avatars[0].image)
+	// 	console.log(props)
+	// }, [props])
 	return (
 		<View style={styles.friendCard}>
 			<View>
-				{image ? (
+				{props.profile1.avatars[0] ? (
 					<Image
-						source={{ uri: image }}
-						style={{ width: 96, height: 96, borderRadius: 20 }}
+						source={{ uri: HTTPS_HOST + "/media/" + props.profile1.avatars[0]?.image }}
+						style={{ width: 96, height: 96, borderRadius: 50 }}
 					/>
 				) : (
 					<ICONS.AnonymousLogoIcon width={96} height={96} />
@@ -43,7 +43,7 @@ export function FriendRequest({
 							fontWeight: "700",
 						}}
 					>
-						{name} {surname}
+						{props.profile1.user.first_name} {props.profile1.user.last_name}
 					</Text>
 					<Text
 						style={{
@@ -53,7 +53,7 @@ export function FriendRequest({
 							fontWeight: "500",
 						}}
 					>
-						@{username}
+						@{props.profile1.user.username}
 					</Text>
 				</View>
 			</View>
@@ -61,7 +61,7 @@ export function FriendRequest({
 			<View style={{ flexDirection: "row" }}>
 				<TouchableOpacity
 					style={[styles.button, { backgroundColor: "#543C52" }]}
-					onPress={onAccept}
+					onPress={props.onAccept}
 				>
 					<Text
 						style={{
@@ -82,38 +82,36 @@ export function FriendRequest({
 							backgroundColor: "white",
 						},
 					]}
-					onPress={onReject}
+					onPress={props.onReject}
 				>
-					<Text>Видалити</Text>
+					<Text>Відхилити</Text>
 				</TouchableOpacity>
 			</View>
 		</View>
 	);
 }
 
-export function FriendSendRequest({
-	id,
-	image,
-	name,
-	surname,
-	username,
-	onReject,
-}: FriendCard & { onReject?: () => void }) {
+export function FriendSendRequest(
+	props: FriendCard & { onRefresh: () => void }
+) {
 	const sendRequest = async () => {
 		const token = await AsyncStorage.getItem("token");
 		try {
 			const res = await fetch(
-				"http://192.168.3.11:3011/friend/send-friend-request",
+				`http://${HOST}/friend/send-friend-request`,
 				{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 						Authorization: `Bearer ${token}`,
 					},
-					body: JSON.stringify({ toUser: Number(id) }),
+					body: JSON.stringify({ to: Number(props.user.id) }),
 				}
 			);
-			if (res.ok) alert("Request send");
+			const result = await res.json()
+			if (result.status === "success"){
+				props.onRefresh()
+			}
 			else alert("Request send error");
 		} catch {
 			alert("Network error");
@@ -123,10 +121,10 @@ export function FriendSendRequest({
 	return (
 		<View style={styles.friendCard}>
 			<View>
-				{image ? (
+				{props.avatars[0]?.image ? (
 					<Image
-						source={{ uri: image }}
-						style={{ width: 96, height: 96, borderRadius: 20 }}
+						source={{ uri: HTTPS_HOST + "/media/" + props.avatars[0]?.image }}
+						style={{ width: 96, height: 96, borderRadius: 50 }}
 					/>
 				) : (
 					<ICONS.AnonymousLogoIcon width={96} height={96} />
@@ -146,7 +144,7 @@ export function FriendSendRequest({
 							fontWeight: "700",
 						}}
 					>
-						{name} {surname}
+						{props.user.first_name} {props.user.last_name}
 					</Text>
 					<Text
 						style={{
@@ -156,7 +154,7 @@ export function FriendSendRequest({
 							fontWeight: "500",
 						}}
 					>
-						@{username}
+						@{props.user.username}
 					</Text>
 				</View>
 			</View>
@@ -175,7 +173,7 @@ export function FriendSendRequest({
 						Додати
 					</Text>
 				</TouchableOpacity>
-				<TouchableOpacity
+				{/* <TouchableOpacity
 					style={[
 						styles.button,
 						{
@@ -184,7 +182,7 @@ export function FriendSendRequest({
 							backgroundColor: "white",
 						},
 					]}
-					onPress={onReject}
+					onPress={props.onReject}
 				>
 					<Text
 						style={{
@@ -194,31 +192,36 @@ export function FriendSendRequest({
 					>
 						Видалити
 					</Text>
-				</TouchableOpacity>
+				</TouchableOpacity> */}
 			</View>
 		</View>
 	);
 }
 
-export function FriendItem({ id, image, name, surname, username }: FriendCard) {
+export function FriendItem(props: FriendCard & {onRefresh: () => void}) {
+
 	const handleDelete = async () => {
 		try {
 			const token = await AsyncStorage.getItem("token");
 			if (!token) return;
 
-			const res = await fetch("http://192.168.3.11:3011/friend/delete-friend", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({ friendId: id }),
-			});
+			const res = await fetch(
+				`http://${HOST}/friend/delete-friend`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify({ friendId: props.user.id }),
+				}
+			);
 
 			const data = await res.json();
 
 			if (data.status === "success") {
-				alert("Успіх! Друг видалений");
+				// alert("Успіх! Друг видалений");
+				props.onRefresh()
 			} else {
 				alert("Помилка! Щось пішло не так");
 			}
@@ -231,10 +234,10 @@ export function FriendItem({ id, image, name, surname, username }: FriendCard) {
 	return (
 		<View style={styles.friendCard}>
 			<View>
-				{image ? (
+				{props.avatars[0]?.image ? (
 					<Image
-						source={{ uri: image }}
-						style={{ width: 96, height: 96, borderRadius: 20 }}
+						source={{ uri: HTTPS_HOST + "/media/" + props.avatars[0]?.image }}
+						style={{ width: 96, height: 96, borderRadius: 50 }}
 					/>
 				) : (
 					<ICONS.AnonymousLogoIcon width={96} height={96} />
@@ -254,7 +257,7 @@ export function FriendItem({ id, image, name, surname, username }: FriendCard) {
 							fontWeight: "700",
 						}}
 					>
-						{name} {surname}
+						{props.user.first_name} {props.user.last_name}
 					</Text>
 					<Text
 						style={{
@@ -264,7 +267,7 @@ export function FriendItem({ id, image, name, surname, username }: FriendCard) {
 							fontWeight: "500",
 						}}
 					>
-						@{username}
+						@{props.user.username}
 					</Text>
 				</View>
 			</View>
@@ -275,7 +278,7 @@ export function FriendItem({ id, image, name, surname, username }: FriendCard) {
 						{
 							backgroundColor: "#543C52",
 							padding: 10,
-							borderRadius: 20,
+							borderRadius: 50,
 							justifyContent: "center",
 							alignItems: "center",
 						},
@@ -302,7 +305,6 @@ export function FriendItem({ id, image, name, surname, username }: FriendCard) {
 		</View>
 	);
 }
-
 
 FriendRequest.FriendSendRequest = FriendSendRequest;
 FriendRequest.FriendItem = FriendItem;
